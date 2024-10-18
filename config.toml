@@ -1,0 +1,8 @@
+[RoomConfig]
+ips = ["192.168.23.120","192.168.23.119","192.168.50.252"]
+
+[Database]
+server = "localhost"
+user = "root"
+password = "1234"
+port = "27017"
