@@ -1,12 +1,8 @@
 package vars
 
 type RoomConfig struct {
-	Sensors  Sensors  `toml:"RoomConfig"`
-	Database Database `toml:"Database"`
-}
-
-type Sensors struct {
-	Ips []string `toml:"ips"`
+	Sensors  SensorsIP `toml:"RoomConfig"`
+	Database Database  `toml:"Database"`
 }
 
 type Database struct {
@@ -14,6 +10,22 @@ type Database struct {
 	User     string
 	Password string
 	Port     string
+}
+
+type SensorsIP struct {
+	Ips []string `toml:"ips"`
+}
+
+type AllData struct {
+	Room        string
+	SensorsData []SensorOrdered
+}
+
+type SensorOrdered struct {
+	Sensor      string
+	Temperature []string
+	Humidity    []string
+	HeatIndex   []string
 }
 
 type RoomData struct {

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -48,65 +49,112 @@ func main() {
 	go GetData(config.Sensors.Ips)
 
 	router := gin.Default()
-
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"*"}, // You can specify allowed origins here
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
+	}))
 	router.GET("/data", SendData)
 	router.Run(":8080")
 	wg.Wait()
 }
 
 func SendData(c *gin.Context) {
-	d := ConnectToMongo()
-	col := d.Collection("sensors")
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.Header("Access-Control-Allow-Origin", "*")
+	db := ConnectToMongo()
+	col := db.Collection("sensors")
 	// filter :=
 	cur, err := col.Find(ctx, bson.D{})
 	if err != nil {
 		fmt.Println(err)
 	}
-	sensorName := []string{}
+	Rooms := []string{}
 	for cur.Next(ctx) {
 		var result bson.M
 		if err := cur.Decode(&result); err != nil {
 			log.Fatal(err)
 		}
 		// Print the result (each document)
-		sensorName = append(sensorName, result["name"].(string))
+		Rooms = append(Rooms, result["name"].(string))
 	}
+
 	cur.Close(ctx)
-	// col := d.Collection("sensors")
-	// retrData := []vars.RoomData{}
-	fmt.Println(sensorName)
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{Key: "_id", Value: -1}})
 	findOptions.SetLimit(100)
-	results := [][]bson.M{}
-
-	for _, s := range sensorName {
-		SensorColl := d.Collection(s)
+	finalRoomSensors := []vars.AllData{}
+	for _, r := range Rooms {
+		SensorColl := db.Collection(r)
 		cur, err := SensorColl.Find(ctx, bson.M{}, findOptions)
 		if err != nil {
 			fmt.Println(err)
 		}
-
-		// Iterate through the results
-		var sensor []bson.M
-
-		if err = cur.All(ctx, &sensor); err != nil {
+		var ResultsOfRoom []vars.RoomData
+		if err = cur.All(ctx, &ResultsOfRoom); err != nil {
 			log.Fatal(err)
 		}
-		cur.Close(ctx)
-		results = append(results, sensor)
-		// fmt.Println(results)
-
+		RoomSensors := make([]vars.SensorOrdered, len(ResultsOfRoom[0].Sensors))
+		for i, j := range ResultsOfRoom[0].Sensors {
+			RoomSensors[i].Sensor = j.Lab
+		}
+		for _, lineOfEveryResult := range ResultsOfRoom {
+			// RoomSensors := make([]vars.SensorOrdered, 4)
+			for i, sens := range lineOfEveryResult.Sensors {
+				RoomSensors[i].HeatIndex = append(RoomSensors[i].HeatIndex, sens.Hic)
+				RoomSensors[i].Temperature = append(RoomSensors[i].Temperature, sens.Tc)
+				RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, sens.H)
+			}
+		}
+		Final := vars.AllData{Room: r, SensorsData: RoomSensors}
+		finalRoomSensors = append(finalRoomSensors, Final)
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"data": results,
-	})
-	// cur, err := collection.Find(ctx, bson.D{{}}, findOptions)
-}
 
-// findOptions := options.Find()
-// 	findOptions.SetSort(bson.D{{Key: "_id", Value: -1}})
-// 	findOptions.SetLimit(100)
+	// DataToSend := []vars.RoomDataf{}
+	// for _, s := range sensorName {
+	// 	rdf := vars.RoomDataf{}
+	// 	rdf.Room = s
+	// 	SensorColl := db.Collection(s)
+	// 	cur, err := SensorColl.Find(ctx, bson.M{}, findOptions)
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 	}
+	// 	// Iterate through the results
+	// 	var sensor []vars.RoomData
+	// 	if err = cur.All(ctx, &sensor); err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	cur.Close(ctx)
+	// 	sdata := make([]vars.SensorData, len(sensor))
+
+	// 	for i, sens := range sensor {
+
+	// 		for _, j := range sens.Sensors {
+	// 			sdata[i].Sensor = sens.Name
+	// 			sdata[i].Humidity = append(sdata[i].Humidity, j.H)
+	// 			sdata[i].Temperature = append(sdata[i].Temperature, j.Tc)
+	// 			sdata[i].HeatIndex = append(sdata[i].HeatIndex, j.Hic)
+	// 			// fmt.Println(i)
+
+	// 			// fmt.Println(i)
+	// 			// sdata.Temperature = append(sdata.Temperature, j.Tc)
+	// 			// if j.H != "" {
+	// 			// 	sdata.Humidity = append(sdata.Temperature, j.H)
+	// 			// }
+	// 			// if j.Hic != "" {
+	// 			// 	sdata.HeatIndex = append(sdata.HeatIndex, j.Hic)
+	// 			// }
+
+	// 		}
+	// 	}
+	// 	rdf.SensorData = append(rdf.SensorData, sdata...)
+	// 	DataToSend = append(DataToSend, rdf)
+
+	// }
+	c.JSON(http.StatusOK, gin.H{
+		"data": finalRoomSensors,
+	})
+}
 
 func GetData(urls []string) {
 	defer wg.Done()

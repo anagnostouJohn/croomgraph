@@ -8,5 +8,5 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: 1234
     volumes:
-      - ./croomgraph:/data/db
+      - ./croomgraphDB:/data/db
     restart: unless-stopped
