@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -63,8 +65,9 @@ func SendData(c *gin.Context) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	c.Header("Access-Control-Allow-Origin", "*")
 	db := ConnectToMongo()
+
 	col := db.Collection("sensors")
-	// filter :=
+	defer col.Database().Client().Disconnect(ctx)
 	cur, err := col.Find(ctx, bson.D{})
 	if err != nil {
 		fmt.Println(err)
@@ -99,66 +102,69 @@ func SendData(c *gin.Context) {
 			RoomSensors[i].Sensor = j.Lab
 		}
 		for _, lineOfEveryResult := range ResultsOfRoom {
-			// RoomSensors := make([]vars.SensorOrdered, 4)
 			for i, sens := range lineOfEveryResult.Sensors {
-				RoomSensors[i].HeatIndex = append(RoomSensors[i].HeatIndex, sens.Hic)
-				RoomSensors[i].Temperature = append(RoomSensors[i].Temperature, sens.Tc)
-				RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, sens.H)
+				if sens.Hic != "" {
+					if s, err := strconv.ParseFloat(sens.Hic, 32); err == nil {
+						roundedValue := math.Round(s*100) / 100
+						RoomSensors[i].HeatIndex = append(RoomSensors[i].HeatIndex, roundedValue)
+					}
+
+				}
+				if sens.Tc != "" {
+					if s, err := strconv.ParseFloat(sens.Tc, 32); err == nil {
+						roundedValue := math.Round(s*100) / 100
+						RoomSensors[i].Temperature = append(RoomSensors[i].Temperature, roundedValue)
+					}
+
+				}
+				if sens.H != "" {
+					if s, err := strconv.ParseFloat(sens.H, 32); err == nil {
+						// fmt.Println(s) // 3.1415927410125732
+						roundedValue := math.Round(s*100) / 100
+						RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, roundedValue)
+					}
+					// RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, sens.H)
+				}
+			}
+		}
+
+		for i, rs := range RoomSensors {
+			T := CheckIfZero(rs.Temperature)
+			H := CheckIfZero(rs.HeatIndex)
+			HIC := CheckIfZero(rs.Humidity)
+			if T {
+				RoomSensors[i].Temperature = []float64{}
+			}
+			if H {
+				RoomSensors[i].Humidity = []float64{}
+			}
+			if HIC {
+				RoomSensors[i].HeatIndex = []float64{}
 			}
 		}
 		Final := vars.AllData{Room: r, SensorsData: RoomSensors}
 		finalRoomSensors = append(finalRoomSensors, Final)
 	}
 
-	// DataToSend := []vars.RoomDataf{}
-	// for _, s := range sensorName {
-	// 	rdf := vars.RoomDataf{}
-	// 	rdf.Room = s
-	// 	SensorColl := db.Collection(s)
-	// 	cur, err := SensorColl.Find(ctx, bson.M{}, findOptions)
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 	}
-	// 	// Iterate through the results
-	// 	var sensor []vars.RoomData
-	// 	if err = cur.All(ctx, &sensor); err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	cur.Close(ctx)
-	// 	sdata := make([]vars.SensorData, len(sensor))
-
-	// 	for i, sens := range sensor {
-
-	// 		for _, j := range sens.Sensors {
-	// 			sdata[i].Sensor = sens.Name
-	// 			sdata[i].Humidity = append(sdata[i].Humidity, j.H)
-	// 			sdata[i].Temperature = append(sdata[i].Temperature, j.Tc)
-	// 			sdata[i].HeatIndex = append(sdata[i].HeatIndex, j.Hic)
-	// 			// fmt.Println(i)
-
-	// 			// fmt.Println(i)
-	// 			// sdata.Temperature = append(sdata.Temperature, j.Tc)
-	// 			// if j.H != "" {
-	// 			// 	sdata.Humidity = append(sdata.Temperature, j.H)
-	// 			// }
-	// 			// if j.Hic != "" {
-	// 			// 	sdata.HeatIndex = append(sdata.HeatIndex, j.Hic)
-	// 			// }
-
-	// 		}
-	// 	}
-	// 	rdf.SensorData = append(rdf.SensorData, sdata...)
-	// 	DataToSend = append(DataToSend, rdf)
-
-	// }
 	c.JSON(http.StatusOK, gin.H{
 		"data": finalRoomSensors,
 	})
 }
 
+func CheckIfZero(list []float64) bool {
+
+	for _, v := range list {
+		if v != 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func GetData(urls []string) {
 	defer wg.Done()
 	d := ConnectToMongo()
+
 	for {
 		for _, url := range urls {
 
@@ -179,6 +185,7 @@ func GetData(urls []string) {
 				fmt.Println(err)
 			}
 			col := d.Collection("sensors")
+
 			filter := bson.D{{Key: "name", Value: rd.Name}}
 			upsert := true
 			opts := options.UpdateOptions{
@@ -221,5 +228,6 @@ func ConnectToMongo() *mongo.Database {
 	}
 	fmt.Println("Pinged your deployment. You successfully connected to MongoDB!")
 	Database = client.Database("cRoomData")
+
 	return Database
 }

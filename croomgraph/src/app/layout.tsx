@@ -1,6 +1,7 @@
 import TemporaryDrawer from "@/component/Sidebat"
 import Head from "next/head"
 import { StyledEngineProvider } from '@mui/material/styles';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 
 
 export const metadata = {
@@ -19,9 +20,13 @@ export default function RootLayout({
 
       <body>
       <StyledEngineProvider injectFirst>
+      <AppRouterCacheProvider>
+     
         <TemporaryDrawer/>
         <h1>TEST ME</h1>
         {children}
+        
+        </AppRouterCacheProvider>
         </StyledEngineProvider>
         </body>
     </html>

@@ -7,15 +7,15 @@ import List from '@mui/material/List';
 import Divider from '@mui/material/Divider';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 
 
 export default function TemporaryDrawer() {
     const [open, setOpen] = React.useState(false);
     const list: string[] = [];
-
+    const router = useRouter();
     const toggleDrawer = (newOpen: boolean) => () => {
         setOpen(newOpen);
     };
@@ -33,16 +33,13 @@ export default function TemporaryDrawer() {
             Object.entries(data).forEach(([key, value]) => {
                 list.push(value["Room"])
             })
-
             setState(list)
-
-
         })
     }, [])
 
-    const RedirectToRoom: (roomName: string) => void = (roomName) => {
-        console.log(`Redirecting to room: ${roomName}`);
-      };
+    const RedirectToRoom: (roomName: string, indexPlace: number) => void = (roomName, indexPlace) => {
+        router.push(`/room/${roomName}?index=${indexPlace}`);
+    };
 
 
     const DrawerList = (
@@ -53,7 +50,7 @@ export default function TemporaryDrawer() {
                     return (
                         <ListItem key={text} disablePadding>
                             <ListItemButton>
-                                <ListItemText primary={text} onClick={()=>RedirectToRoom(text)}/>
+                                <ListItemText primary={text} onClick={() => RedirectToRoom(text, index)} />
                             </ListItemButton>
                         </ListItem>
                     );
@@ -61,7 +58,6 @@ export default function TemporaryDrawer() {
 
             </List>
             <Divider />
-
         </Box>
     );
 
@@ -76,15 +72,3 @@ export default function TemporaryDrawer() {
 }
 
 
-{/* <List> */ }
-// {['All mail', 'Trash', 'Spam'].map((text, index) => (
-//   <ListItem key={text} disablePadding>
-// <ListItemButton>
-//   {/* <ListItemIcon>
-// {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-//   </ListItemIcon> */}
-//   <ListItemText primary={text} />
-// </ListItemButton>
-//   </ListItem>
-// ))}
-// </List>

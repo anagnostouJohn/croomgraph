@@ -23,9 +23,9 @@ type AllData struct {
 
 type SensorOrdered struct {
 	Sensor      string
-	Temperature []string
-	Humidity    []string
-	HeatIndex   []string
+	Temperature []float64
+	Humidity    []float64
+	HeatIndex   []float64
 }
 
 type RoomData struct {
