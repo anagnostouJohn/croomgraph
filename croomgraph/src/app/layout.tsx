@@ -23,7 +23,7 @@ export default function RootLayout({
       <AppRouterCacheProvider>
      
         <TemporaryDrawer/>
-        <h1>TEST ME</h1>
+
         {children}
         
         </AppRouterCacheProvider>
