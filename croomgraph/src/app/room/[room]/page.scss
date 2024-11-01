@@ -1,0 +1,44 @@
+.SensorGraphs {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns by default */
+    gap: 20px; /* Space between graphs */
+    max-width: 100%; /* Ensures it doesn’t overflow the page width */
+    margin: 0 auto; /* Centers the content */
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  
+  /* Responsive layout for smaller screens */
+  @media (max-width: 800px) {
+    .SensorGraphs {
+      grid-template-columns: 1fr; /* Switches to one column on smaller screens */
+    }
+  }
+  
+  .TheGraph {
+    width: 100%; /* Make each graph take up full width of its cell */
+    height: auto;
+  }
+
+.RoomP{
+  text-align: center;
+  font-weight: bold;
+  font-size: 30px;
+  text-shadow: 2px 2px 4px rgba(48, 132, 228, 0.863);
+  text-decoration: underline;
+
+}
+
+  .SensorP{
+    font-weight: bold;
+    font-size: 20px;
+    margin-left: 6px;
+    text-shadow: 1px 1px 3px rgba(48, 132, 228, 0.863);
+  }
+
+.IndicatorP{
+  text-align: center;
+  text-decoration: underline;
+  
+  font-weight: bold;
+}

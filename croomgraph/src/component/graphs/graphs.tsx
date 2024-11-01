@@ -5,11 +5,17 @@ import * as React from 'react';
 
 import { LineChart } from '@mui/x-charts/LineChart';
 
+// const chartsParams = {
+//   margin: { bottom: 20, left: 25, right: 5 },
+//   height: 300,
+// };
+
 const Graph  = ({ data }: { data: any }) =>{
     return(
         <div>
           {/* <p> {"sadasdasd"}</p> */}
         <LineChart
+      //  {...chartsParams}
         xAxis={[
           {
             id: 'barCategories',
@@ -23,7 +29,7 @@ const Graph  = ({ data }: { data: any }) =>{
             data: data
           },
         ]}
-        width={1000}
+        width={850}
         height={300}
       />
     </div>

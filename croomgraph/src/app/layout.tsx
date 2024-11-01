@@ -23,9 +23,9 @@ export default function RootLayout({
       <AppRouterCacheProvider>
      
         <TemporaryDrawer/>
-
+      <div className="mainDiv">
         {children}
-        
+        </div>
         </AppRouterCacheProvider>
         </StyledEngineProvider>
         </body>

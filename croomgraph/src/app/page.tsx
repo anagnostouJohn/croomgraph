@@ -1,6 +1,6 @@
 
 export default function Home() {
   return (
-   <>Hello there</>
+   <>Room Alert Page Select a room to view</>
   );
 }

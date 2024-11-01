@@ -4,11 +4,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Graph from '@/component/graphs/graphs';
 import * as React from 'react';
+import "./page.scss"
 
 
 const RoomPage = ({ params }: { params: { room: string } }) => {
     const router = useRouter();
-    // const { room } = params;
+    // const { room } = params;   
     const [room, setRoom] = React.useState("")
     const [dummyData, setDummyData] = React.useState<any[]>([]);
     const searchParams = useSearchParams();
@@ -32,22 +33,28 @@ const RoomPage = ({ params }: { params: { room: string } }) => {
 
             })
         }
-        const interval = setInterval(feachData, 1000);
+        const interval = setInterval(feachData, 10000);
         return () => clearInterval(interval);
     }, [])
 
     return (<>
-        <h1>{room}</h1>
-        {dummyData.map((key, value) => {
-            return (
-                <>
-                
-                {dummyData[value]["Temperature"].length == 0 ? <></> : <><h4> {key["Sensor"]}</h4> <Graph data={dummyData[value]["Temperature"]}/> </>}
-                </>
-            )
-        })
-        }
-        
+        <p className={"RoomP"}>{room}</p>
+        <div className={"AllGraphs"}>
+            {dummyData.map((key, value) => {
+                return (
+                    <>
+                        {dummyData[value]["Temperature"].length == 0  && dummyData[value]["Humidity"].length == 0 ? <></> : <p className={"SensorP"}> Sensor : {key["Sensor"]}</p>}
+                        <div className={"SensorGraphs"}>
+                            {dummyData[value]["Temperature"].length == 0 ? <></> : <><div className={"TheGraph"}> <p className={"IndicatorP"}> Temperature </p>  <Graph data={dummyData[value]["Temperature"]} /></div> </>}
+                            {dummyData[value]["Humidity"].length == 0 ? <></> : <><div className={"TheGraph"}> <p className={"IndicatorP"}> Humidity </p>  <Graph data={dummyData[value]["Humidity"]} /></div> </>}
+                        </div>
+                        </>
+                    
+                )
+            })
+            }
+        </div>
+
 
     </>)
 }

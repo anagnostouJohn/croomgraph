@@ -10,6 +10,11 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import Image from 'next/image'
+
+import RoomsPng from "../../pngs/room.png"
+
+
 
 
 export default function TemporaryDrawer() {
@@ -46,7 +51,7 @@ export default function TemporaryDrawer() {
         <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
             <List>
                 {state.map((text, index) => {
-                    console.log(text, "ffffff")
+                   
                     return (
                         <ListItem key={text} disablePadding>
                             <ListItemButton>
@@ -63,7 +68,9 @@ export default function TemporaryDrawer() {
 
     return (
         <div>
-            <Button onClick={toggleDrawer(true)}>Rooms</Button>
+            {/* <Button onClick={toggleDrawer(true)}>Rooms</Button> */}
+            {/* <img onClick={toggleDrawer(true)}  */}
+             <Image onClick={toggleDrawer(true)} src={RoomsPng} alt="Room" width="50" height="50"/> 
             <Drawer open={open} onClose={toggleDrawer(false)}>
                 {DrawerList}
             </Drawer>
