@@ -28,6 +28,12 @@ var Database *mongo.Database
 var uri string
 
 var wg sync.WaitGroup
+var av int = 1
+var countForAv = 0
+var TempHum []float64
+var TempTemp []float64
+var TempHiC []float64
+var DataToRetreave int64 = 100
 
 func init() {
 
@@ -57,8 +63,39 @@ func main() {
 		AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
 	}))
 	router.GET("/data", SendData)
+	router.POST("/change", ChangeData)
 	router.Run(":8080")
 	wg.Wait()
+}
+
+func ChangeData(c *gin.Context) {
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.Header("Access-Control-Allow-Origin", "*")
+
+	var data vars.Data
+
+	if err := c.ShouldBindJSON(&data); err != nil {
+
+		// If there's an error in binding, return a bad request
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	fmt.Println(data)
+	switch d := data.Value; d {
+	case "1":
+		DataToRetreave = 100
+		av = 1
+	case "2":
+		DataToRetreave = 9000
+		av = 9
+	case "3":
+		DataToRetreave = 61000
+		av = 61
+	case "4":
+		DataToRetreave = 259200
+		av = 259
+	}
+	c.JSON(http.StatusOK, gin.H{"received_value": data.Value})
 }
 
 func SendData(c *gin.Context) {
@@ -85,7 +122,7 @@ func SendData(c *gin.Context) {
 	cur.Close(ctx)
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{Key: "_id", Value: -1}})
-	findOptions.SetLimit(100)
+	findOptions.SetLimit(DataToRetreave)
 	finalRoomSensors := []vars.AllData{}
 	for _, r := range Rooms {
 		SensorColl := db.Collection(r)
@@ -101,30 +138,69 @@ func SendData(c *gin.Context) {
 		for i, j := range ResultsOfRoom[0].Sensors {
 			RoomSensors[i].Sensor = j.Lab
 		}
+
 		for _, lineOfEveryResult := range ResultsOfRoom {
 			for i, sens := range lineOfEveryResult.Sensors {
+				countForAv = countForAv + 1
+				fmt.Println(countForAv, av, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAa")
 				if sens.Hic != "" {
 					if s, err := strconv.ParseFloat(sens.Hic, 32); err == nil {
 						roundedValue := math.Round(s*100) / 100
-						RoomSensors[i].HeatIndex = append(RoomSensors[i].HeatIndex, roundedValue)
-					}
+						TempHiC = append(TempHiC, roundedValue)
+						if countForAv == av {
+							fmt.Println(countForAv, av, "<<<<<<<<<<<<<<<<<<<")
+							countForAv = 0
 
+							var x float64
+							for _, hic := range TempHiC {
+								x = x + hic
+							}
+							// fmt.Println(x)
+							x = x / float64(len(TempHiC))
+							TempHiC = TempHiC[:0]
+							RoomSensors[i].HeatIndex = append(RoomSensors[i].HeatIndex, x)
+						}
+					}
 				}
 				if sens.Tc != "" {
 					if s, err := strconv.ParseFloat(sens.Tc, 32); err == nil {
 						roundedValue := math.Round(s*100) / 100
-						RoomSensors[i].Temperature = append(RoomSensors[i].Temperature, roundedValue)
-					}
+						TempTemp = append(TempTemp, roundedValue)
+						// fmt.Println()
+						if countForAv == av {
+							countForAv = 0
 
+							var x float64
+							for _, temperature := range TempTemp {
+								x = x + temperature
+							}
+							x = x / float64(len(TempTemp))
+							TempTemp = TempTemp[:0]
+							RoomSensors[i].Temperature = append(RoomSensors[i].Temperature, x)
+						}
+					}
 				}
 				if sens.H != "" {
 					if s, err := strconv.ParseFloat(sens.H, 32); err == nil {
 						// fmt.Println(s) // 3.1415927410125732
 						roundedValue := math.Round(s*100) / 100
-						RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, roundedValue)
+						TempHum = append(TempHum, roundedValue)
+						if countForAv == av {
+							countForAv = 0
+
+							var x float64
+							for _, humidity := range TempHum {
+								x = x + humidity
+							}
+							x = x / float64(len(TempHum))
+							TempHum = TempHum[:0]
+
+							RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, x)
+						}
 					}
 					// RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, sens.H)
 				}
+				// fmt.Println(RoomSensors)
 			}
 		}
 

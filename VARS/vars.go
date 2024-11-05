@@ -142,3 +142,7 @@ type SwitchSen struct {
 	Profile int    `json:"profile"`
 	Stat    int    `json:"stat"`
 }
+
+type Data struct {
+	Value string `json:"value"` // JSON field should match the frontend data key
+}
