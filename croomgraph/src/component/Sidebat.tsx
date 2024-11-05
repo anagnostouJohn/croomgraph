@@ -33,12 +33,8 @@ export default function TemporaryDrawer() {
 
 
     React.useEffect(() => {
-        axios.get("http://192.168.23.61:8080/data").then(res => {
-            const data: DataType = res.data["data"];
-            Object.entries(data).forEach(([key, value]) => {
-                list.push(value["Room"])
-            })
-            setState(list)
+        axios.get("http://192.168.23.61:8080/getrooms").then(res => {
+            setState(res.data["data"])
         })
     }, [])
 

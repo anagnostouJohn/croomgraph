@@ -1,5 +1,7 @@
 package vars
 
+import "sync"
+
 type RoomConfig struct {
 	Sensors  SensorsIP `toml:"RoomConfig"`
 	Database Database  `toml:"Database"`
@@ -145,4 +147,38 @@ type SwitchSen struct {
 
 type Data struct {
 	Value string `json:"value"` // JSON field should match the frontend data key
+}
+
+type ListCounter struct {
+	Av             int
+	CountForAv     int
+	DataToRetreave int64
+	Mu             sync.Mutex
+}
+
+func (l *ListCounter) SetNew(x int, y int64) {
+	l.Mu.Lock()
+	defer l.Mu.Unlock()
+	l.CountForAv = 0
+	l.DataToRetreave = y
+	l.Av = x
+}
+
+func (l *ListCounter) SetZero() {
+	l.Mu.Lock()
+	defer l.Mu.Unlock()
+	l.CountForAv = 0
+}
+
+func (l *ListCounter) Increase() {
+	l.Mu.Lock()
+	defer l.Mu.Unlock()
+	l.CountForAv++
+}
+
+func (l *ListCounter) Check() bool {
+	l.Mu.Lock()
+	defer l.Mu.Unlock()
+	return l.CountForAv < l.Av
+
 }

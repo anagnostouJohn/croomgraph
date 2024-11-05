@@ -28,15 +28,14 @@ var Database *mongo.Database
 var uri string
 
 var wg sync.WaitGroup
-var av int = 1
-var countForAv = 0
+
 var TempHum []float64
 var TempTemp []float64
 var TempHiC []float64
-var DataToRetreave int64 = 100
+
+var check vars.ListCounter
 
 func init() {
-
 	file, err := os.ReadFile("config.toml")
 	if err != nil {
 		log.Fatal(err)
@@ -48,6 +47,7 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	check.SetNew(1, 100)
 
 }
 
@@ -63,9 +63,37 @@ func main() {
 		AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
 	}))
 	router.GET("/data", SendData)
+	router.GET("/getrooms", GetRooms)
 	router.POST("/change", ChangeData)
 	router.Run(":8080")
 	wg.Wait()
+}
+
+func GetRooms(c *gin.Context) {
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.Header("Access-Control-Allow-Origin", "*")
+	db := ConnectToMongo()
+	col := db.Collection("sensors")
+	// col := db.Collection("sensors")
+	defer col.Database().Client().Disconnect(ctx)
+	cur, err := col.Find(ctx, bson.D{})
+	if err != nil {
+		fmt.Println(err)
+	}
+	Rooms := []string{}
+	for cur.Next(ctx) {
+		var result bson.M
+		if err := cur.Decode(&result); err != nil {
+			log.Fatal(err)
+		}
+		// Print the result (each document)
+		Rooms = append(Rooms, result["name"].(string))
+	}
+	// fmt.Println(Rooms)
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": Rooms,
+	})
 }
 
 func ChangeData(c *gin.Context) {
@@ -83,17 +111,13 @@ func ChangeData(c *gin.Context) {
 	fmt.Println(data)
 	switch d := data.Value; d {
 	case "1":
-		DataToRetreave = 100
-		av = 1
+		check.SetNew(1, 100)
 	case "2":
-		DataToRetreave = 9000
-		av = 9
+		check.SetNew(9, 9000)
 	case "3":
-		DataToRetreave = 61000
-		av = 61
+		check.SetNew(61, 61000)
 	case "4":
-		DataToRetreave = 259200
-		av = 259
+		check.SetNew(259, 259200)
 	}
 	c.JSON(http.StatusOK, gin.H{"received_value": data.Value})
 }
@@ -122,7 +146,7 @@ func SendData(c *gin.Context) {
 	cur.Close(ctx)
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{Key: "_id", Value: -1}})
-	findOptions.SetLimit(DataToRetreave)
+	findOptions.SetLimit(check.DataToRetreave)
 	finalRoomSensors := []vars.AllData{}
 	for _, r := range Rooms {
 		SensorColl := db.Collection(r)
@@ -138,28 +162,27 @@ func SendData(c *gin.Context) {
 		for i, j := range ResultsOfRoom[0].Sensors {
 			RoomSensors[i].Sensor = j.Lab
 		}
-
 		for _, lineOfEveryResult := range ResultsOfRoom {
 			for i, sens := range lineOfEveryResult.Sensors {
-				countForAv = countForAv + 1
-				fmt.Println(countForAv, av, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAa")
+
+				fmt.Println(check.Av, check.CountForAv)
+				time.Sleep(100 * time.Millisecond)
 				if sens.Hic != "" {
 					if s, err := strconv.ParseFloat(sens.Hic, 32); err == nil {
 						roundedValue := math.Round(s*100) / 100
 						TempHiC = append(TempHiC, roundedValue)
-						if countForAv == av {
-							fmt.Println(countForAv, av, "<<<<<<<<<<<<<<<<<<<")
-							countForAv = 0
-
+						if check.Check() {
+							fmt.Println(len(TempHiC), "HIC")
+							// fmt.Println(countForAv, av, "<<<<<<<<<<<<<<<<<<<")
 							var x float64
 							for _, hic := range TempHiC {
 								x = x + hic
 							}
-							// fmt.Println(x)
 							x = x / float64(len(TempHiC))
 							TempHiC = TempHiC[:0]
 							RoomSensors[i].HeatIndex = append(RoomSensors[i].HeatIndex, x)
 						}
+
 					}
 				}
 				if sens.Tc != "" {
@@ -167,9 +190,9 @@ func SendData(c *gin.Context) {
 						roundedValue := math.Round(s*100) / 100
 						TempTemp = append(TempTemp, roundedValue)
 						// fmt.Println()
-						if countForAv == av {
-							countForAv = 0
-
+						if check.Check() {
+							fmt.Println(TempTemp)
+							fmt.Println(len(TempTemp), "TEMP")
 							var x float64
 							for _, temperature := range TempTemp {
 								x = x + temperature
@@ -182,25 +205,25 @@ func SendData(c *gin.Context) {
 				}
 				if sens.H != "" {
 					if s, err := strconv.ParseFloat(sens.H, 32); err == nil {
-						// fmt.Println(s) // 3.1415927410125732
 						roundedValue := math.Round(s*100) / 100
 						TempHum = append(TempHum, roundedValue)
-						if countForAv == av {
-							countForAv = 0
-
+						if check.Check() {
+							fmt.Println(len(TempHum), "HUM")
 							var x float64
 							for _, humidity := range TempHum {
 								x = x + humidity
 							}
 							x = x / float64(len(TempHum))
 							TempHum = TempHum[:0]
-
 							RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, x)
 						}
 					}
-					// RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, sens.H)
 				}
-				// fmt.Println(RoomSensors)
+				check.Increase()
+				if check.Check() {
+					fmt.Println("INSIDE")
+					check.SetZero()
+				}
 			}
 		}
 
