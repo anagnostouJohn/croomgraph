@@ -13,9 +13,7 @@ import { LineChart } from '@mui/x-charts/LineChart';
 const Graph  = ({ data }: { data: any }) =>{
     return(
         <div>
-          {/* <p> {"sadasdasd"}</p> */}
         <LineChart
-      //  {...chartsParams}
         xAxis={[
           {
             id: 'barCategories',

@@ -150,7 +150,7 @@ type Data struct {
 }
 
 type ListCounter struct {
-	Av             int
+	Step           int
 	CountForAv     int
 	DataToRetreave int64
 	Mu             sync.Mutex
@@ -161,7 +161,7 @@ func (l *ListCounter) SetNew(x int, y int64) {
 	defer l.Mu.Unlock()
 	l.CountForAv = 0
 	l.DataToRetreave = y
-	l.Av = x
+	l.Step = x
 }
 
 func (l *ListCounter) SetZero() {
@@ -179,6 +179,6 @@ func (l *ListCounter) Increase() {
 func (l *ListCounter) Check() bool {
 	l.Mu.Lock()
 	defer l.Mu.Unlock()
-	return l.CountForAv < l.Av
+	return l.CountForAv == l.Step
 
 }

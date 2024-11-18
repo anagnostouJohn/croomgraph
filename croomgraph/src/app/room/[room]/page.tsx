@@ -11,6 +11,7 @@ const RoomPage = ({ params }: { params: { room: string } }) => {
     const router = useRouter();
     // const { room } = params;   
     const [room, setRoom] = React.useState("")
+    const [readyForNext, setReadyForNext] = React.useState(true)
     const [dummyData, setDummyData] = React.useState<any[]>([]);
     const searchParams = useSearchParams();
     const indexPlaceStr = searchParams.get('index');
@@ -23,13 +24,18 @@ const RoomPage = ({ params }: { params: { room: string } }) => {
     }
 
     const feachData = () => {
-        axios.get("http://192.168.23.61:8080/data").then(res => {
-            setDummyData(res.data["data"][indexPlace]["SensorsData"]);
-            console.log(res.data["data"][indexPlace]);
-            console.log("HEllo");
-            setRoom(res.data["data"][indexPlace]["Room"])
 
-        })
+        if (readyForNext) {
+            setReadyForNext(false)
+            axios.get("http://192.168.23.61:8080/data").then(res => {
+                setDummyData(res.data["data"][indexPlace]["SensorsData"]);
+                console.log(res.data["data"][indexPlace]);
+                console.log("HEllo");
+                setRoom(res.data["data"][indexPlace]["Room"])
+                setReadyForNext(true)
+
+            })
+        }
     }
 
     React.useEffect(() => {

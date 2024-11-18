@@ -28,6 +28,9 @@ var Database *mongo.Database
 var uri string
 
 var wg sync.WaitGroup
+var setEND bool = false
+var prevsize = 0
+var size int
 
 var TempHum []float64
 var TempTemp []float64
@@ -54,6 +57,7 @@ func init() {
 func main() {
 
 	wg.Add(1)
+
 	go GetData(config.Sensors.Ips)
 
 	router := gin.Default()
@@ -113,11 +117,11 @@ func ChangeData(c *gin.Context) {
 	case "1":
 		check.SetNew(1, 100)
 	case "2":
-		check.SetNew(9, 9000)
+		check.SetNew(30, 3000)
 	case "3":
-		check.SetNew(61, 61000)
+		check.SetNew(610, 61000)
 	case "4":
-		check.SetNew(259, 259200)
+		check.SetNew(2592, 259200)
 	}
 	c.JSON(http.StatusOK, gin.H{"received_value": data.Value})
 }
@@ -148,6 +152,7 @@ func SendData(c *gin.Context) {
 	findOptions.SetSort(bson.D{{Key: "_id", Value: -1}})
 	findOptions.SetLimit(check.DataToRetreave)
 	finalRoomSensors := []vars.AllData{}
+	setEND = false
 	for _, r := range Rooms {
 		SensorColl := db.Collection(r)
 		cur, err := SensorColl.Find(ctx, bson.M{}, findOptions)
@@ -162,68 +167,90 @@ func SendData(c *gin.Context) {
 		for i, j := range ResultsOfRoom[0].Sensors {
 			RoomSensors[i].Sensor = j.Lab
 		}
-		for _, lineOfEveryResult := range ResultsOfRoom {
-			for i, sens := range lineOfEveryResult.Sensors {
+		// for _, lineOfEveryResult := range ResultsOfRoom {
 
-				fmt.Println(check.Av, check.CountForAv)
-				time.Sleep(100 * time.Millisecond)
-				if sens.Hic != "" {
-					if s, err := strconv.ParseFloat(sens.Hic, 32); err == nil {
-						roundedValue := math.Round(s*100) / 100
-						TempHiC = append(TempHiC, roundedValue)
-						if check.Check() {
-							fmt.Println(len(TempHiC), "HIC")
-							// fmt.Println(countForAv, av, "<<<<<<<<<<<<<<<<<<<")
-							var x float64
-							for _, hic := range TempHiC {
-								x = x + hic
-							}
-							x = x / float64(len(TempHiC))
-							TempHiC = TempHiC[:0]
-							RoomSensors[i].HeatIndex = append(RoomSensors[i].HeatIndex, x)
-						}
+		tempRoomData := []vars.RoomData{}
 
-					}
-				}
-				if sens.Tc != "" {
-					if s, err := strconv.ParseFloat(sens.Tc, 32); err == nil {
-						roundedValue := math.Round(s*100) / 100
-						TempTemp = append(TempTemp, roundedValue)
-						// fmt.Println()
-						if check.Check() {
-							fmt.Println(TempTemp)
-							fmt.Println(len(TempTemp), "TEMP")
-							var x float64
-							for _, temperature := range TempTemp {
-								x = x + temperature
+		for {
+			if size > len(ResultsOfRoom) {
+				prevsize = prevsize - check.Step
+				tempRoomData = ResultsOfRoom[prevsize:]
+				size = check.Step
+				prevsize = 0
+				setEND = true
+			} else if size == len(ResultsOfRoom) {
+				fmt.Println("EQUAL")
+				tempRoomData = ResultsOfRoom[prevsize:]
+				size = check.Step
+				prevsize = 0
+				setEND = true
+			} else {
+				fmt.Println(prevsize, size, "SADASD")
+				tempRoomData = ResultsOfRoom[prevsize:size]
+				prevsize = prevsize + check.Step
+				size = size + check.Step
+			}
+			fmt.Println(size, check.Step, prevsize, len(tempRoomData))
+			for k, j := range tempRoomData {
+				for i, sens := range j.Sensors {
+
+					if sens.Tc != "" {
+						if s, err := strconv.ParseFloat(sens.Tc, 32); err == nil {
+							roundedValue := math.Round(s*100) / 100
+							TempTemp = append(TempTemp, roundedValue)
+							if k == len(tempRoomData) {
+								var x float64
+								for _, temperature := range TempTemp {
+									x = x + temperature
+								}
+								x = x / float64(len(TempTemp))
+								TempTemp = TempTemp[:0]
+								RoomSensors[i].Temperature = append(RoomSensors[i].Temperature, x)
 							}
-							x = x / float64(len(TempTemp))
-							TempTemp = TempTemp[:0]
-							RoomSensors[i].Temperature = append(RoomSensors[i].Temperature, x)
 						}
 					}
+
+					// if sens.Hic != "" {
+					// 	if s, err := strconv.ParseFloat(sens.Hic, 32); err == nil {
+					// 		roundedValue := math.Round(s*100) / 100
+					// 		TempHiC = append(TempHiC, roundedValue)
+
+					// 		if check.Check() {
+					// 			var x float64
+					// 			for _, hic := range TempHiC {
+					// 				x = x + hic
+					// 			}
+					// 			x = x / float64(len(TempHiC))
+					// 			TempHiC = TempHiC[:0]
+					// 			RoomSensors[i].HeatIndex = append(RoomSensors[i].HeatIndex, x)
+					// 		}
+
+					// 	}
+					// }
+
+					// if sens.H != "" {
+					// 	if s, err := strconv.ParseFloat(sens.H, 32); err == nil {
+					// 		roundedValue := math.Round(s*100) / 100
+					// 		TempHum = append(TempHum, roundedValue)
+					// 		if check.Check() {
+					// 			var x float64
+					// 			for _, humidity := range TempHum {
+					// 				x = x + humidity
+					// 			}
+					// 			x = x / float64(len(TempHum))
+
+					// 			TempHum = TempHum[:0]
+					// 			RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, x)
+					// 		}
+					// 	}
+					// }
+
 				}
-				if sens.H != "" {
-					if s, err := strconv.ParseFloat(sens.H, 32); err == nil {
-						roundedValue := math.Round(s*100) / 100
-						TempHum = append(TempHum, roundedValue)
-						if check.Check() {
-							fmt.Println(len(TempHum), "HUM")
-							var x float64
-							for _, humidity := range TempHum {
-								x = x + humidity
-							}
-							x = x / float64(len(TempHum))
-							TempHum = TempHum[:0]
-							RoomSensors[i].Humidity = append(RoomSensors[i].Humidity, x)
-						}
-					}
-				}
-				check.Increase()
-				if check.Check() {
-					fmt.Println("INSIDE")
-					check.SetZero()
-				}
+			}
+			if setEND {
+				tempRoomData = tempRoomData[:0]
+				// fmt.Println("INSIDE")
+				break
 			}
 		}
 
