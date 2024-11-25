@@ -1,14 +1,16 @@
 
 "use client"
-import { useRouter, useSearchParams } from 'next/navigation';
+// import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import Graph from '@/component/graphs/graphs';
 import * as React from 'react';
 import "./page.scss"
 
 
-const RoomPage = ({ params }: { params: { room: string } }) => {
-    const router = useRouter();
+// const RoomPage = ({ params }: { params: { room: string } }) => {
+const RoomPage = () => {
+    // const router = useRouter();
     // const { room } = params;   
     const [room, setRoom] = React.useState("")
     const [readyForNext, setReadyForNext] = React.useState(true)
@@ -16,12 +18,12 @@ const RoomPage = ({ params }: { params: { room: string } }) => {
     const searchParams = useSearchParams();
     const indexPlaceStr = searchParams.get('index');
     const indexPlace = indexPlaceStr ? parseInt(indexPlaceStr, 0) : 0;
-    const list: string[] = [];
+    // const list: string[] = [];
 
 
-    interface DataType {
-        [key: string]: any;  // Define your actual data structure here
-    }
+    // interface DataType {
+    //     [key: string]: any;  // Define your actual data structure here
+    // }
 
     const feachData = () => {
 

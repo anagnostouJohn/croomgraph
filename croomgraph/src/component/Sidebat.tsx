@@ -2,7 +2,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
-import Button from '@mui/material/Button';
+// import Button from '@mui/material/Button';
 import List from '@mui/material/List';
 import Divider from '@mui/material/Divider';
 import ListItem from '@mui/material/ListItem';
@@ -19,15 +19,15 @@ import RoomsPng from "../../pngs/room.png"
 
 export default function TemporaryDrawer() {
     const [open, setOpen] = React.useState(false);
-    const list: string[] = [];
+    // const list: string[] = [];
     const router = useRouter();
     const toggleDrawer = (newOpen: boolean) => () => {
         setOpen(newOpen);
     };
 
-    interface DataType {
-        [key: string]: any;  // Define your actual data structure here
-    }
+    // interface DataType {
+    //     [key: string]: any;  // Define your actual data structure here
+    // }
 
     const [state, setState] = React.useState<string[]>([]);
 

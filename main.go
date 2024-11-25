@@ -10,6 +10,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -29,8 +30,9 @@ var uri string
 
 var wg sync.WaitGroup
 var setEND bool = false
-var prevsize = 0
-var nextSize = 0
+
+// var prevsize = 0
+// var nextSize = 0
 
 var check vars.ListCounter
 
@@ -125,15 +127,19 @@ func ChangeData(c *gin.Context) {
 func SendData(c *gin.Context) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	c.Header("Access-Control-Allow-Origin", "*")
+	nextSize := 0
+	prevsize := 0
+	Rooms := []string{}
+	finalRoomSensors := []vars.AllData{}
+	fmt.Println("MESA MESA NEO")
 	db := ConnectToMongo()
-
 	col := db.Collection("sensors")
 	defer col.Database().Client().Disconnect(ctx)
 	cur, err := col.Find(ctx, bson.D{})
 	if err != nil {
 		fmt.Println(err)
 	}
-	Rooms := []string{}
+
 	for cur.Next(ctx) {
 		var result bson.M
 		if err := cur.Decode(&result); err != nil {
@@ -147,8 +153,7 @@ func SendData(c *gin.Context) {
 	findOptions := options.Find()
 	findOptions.SetSort(bson.D{{Key: "_id", Value: -1}})
 	findOptions.SetLimit(check.DataToRetreave)
-	finalRoomSensors := []vars.AllData{}
-	setEND = false
+
 	for _, room := range Rooms {
 		roomSensorColl := db.Collection(room)
 		cur, err := roomSensorColl.Find(ctx, bson.M{}, findOptions)
@@ -159,6 +164,7 @@ func SendData(c *gin.Context) {
 		if err = cur.All(ctx, &ResultsOfRoom); err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println(len(ResultsOfRoom), nextSize, "AAAAAAAAAAASSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
 		RoomSensors := make([]vars.SensorOrdered, len(ResultsOfRoom[0].Sensors))
 
 		TempTemp := make([][]float64, len(ResultsOfRoom[0].Sensors))
@@ -169,10 +175,13 @@ func SendData(c *gin.Context) {
 			RoomSensors[i].Sensor = j.Lab
 		}
 		// for _, lineOfEveryResult := range ResultsOfRoom {
-
 		tempRoomData := []vars.RoomData{}
-
 		for {
+
+			// tempRoomData := []vars.RoomData{}
+			// TempTemp := make([][]float64, len(ResultsOfRoom[0].Sensors))
+			// TempHum := make([][]float64, len(ResultsOfRoom[0].Sensors))
+			// TempHiC := make([][]float64, len(ResultsOfRoom[0].Sensors))
 			if nextSize > len(ResultsOfRoom) {
 				fmt.Println(prevsize, "------", check.Step)
 				prevsize = prevsize - check.Step
@@ -181,19 +190,18 @@ func SendData(c *gin.Context) {
 				prevsize = 0
 				setEND = true
 			} else if nextSize == len(ResultsOfRoom) {
-				// fmt.Println("EQUAL")
-				// tempRoomData = ResultsOfRoom[prevsize:]
-				// nextSize = check.Step
-				// prevsize = 0
+
 				setEND = true
+				break
 			} else {
 				nextSize = nextSize + check.Step
 				tempRoomData = ResultsOfRoom[prevsize:nextSize]
 				prevsize = prevsize + check.Step
+				// setEND = true
 			}
-			// fmt.Println(nextSize, check.Step, prevsize, len(tempRoomData))
-			//
+
 			for _, j := range tempRoomData { //K
+
 				for sensnum, sens := range j.Sensors { //I
 					if sens.Tc != "" {
 						if s, err := strconv.ParseFloat(sens.Tc, 32); err == nil {
@@ -219,19 +227,18 @@ func SendData(c *gin.Context) {
 				}
 			}
 
-			var t float64
 			for i := 0; i < len(TempTemp); i++ {
+				var t float64
 				for _, j := range TempTemp[i] {
 					t = t + j
 				}
 				t = t / float64(check.Step)
 				RoomSensors[i].Temperature = append(RoomSensors[i].Temperature, t)
-
 				TempTemp[i] = TempTemp[i][:0]
 			}
 
-			var hu float64
 			for i := 0; i < len(TempHum); i++ {
+				var hu float64
 				for _, j := range TempHum[i] {
 					hu = hu + j
 				}
@@ -240,25 +247,23 @@ func SendData(c *gin.Context) {
 				TempHum[i] = TempHum[i][:0]
 			}
 
-			var hi float64
 			for i := 0; i < len(TempHiC); i++ {
+				var hi float64
 				for _, j := range TempHiC[i] {
 					hi = hi + j
 				}
 				hi = hi / float64(check.Step)
 				RoomSensors[i].HeatIndex = append(RoomSensors[i].HeatIndex, hi)
-
 				TempHiC[i] = TempHiC[i][:0]
-
 			}
 
 			// for _, temperature := range TempTemp {
 			// 	x = x + temperature
 			// }
 			if setEND {
-				nextSize = 0
-				prevsize = 0
-				// tempRoomData = tempRoomData[:0]
+
+				// setEND = false
+				tempRoomData = tempRoomData[:0]
 				fmt.Println("INSIDE")
 				break
 
@@ -280,9 +285,17 @@ func SendData(c *gin.Context) {
 				RoomSensors[i].HeatIndex = []float64{}
 			}
 		}
-		fmt.Println(RoomSensors[2].Humidity, "FAFAFAFAFAFAFAF")
+
+		for i, _ := range RoomSensors {
+			slices.Reverse(RoomSensors[i].HeatIndex)
+			slices.Reverse(RoomSensors[i].Humidity)
+			slices.Reverse(RoomSensors[i].Temperature)
+		}
 		Final := vars.AllData{Room: room, SensorsData: RoomSensors}
 		finalRoomSensors = append(finalRoomSensors, Final)
+		nextSize = 0
+		prevsize = 0
+		setEND = false
 	}
 	// fmt.Println(finalRoomSensors, "FINAL FINAL")
 	c.JSON(http.StatusOK, gin.H{

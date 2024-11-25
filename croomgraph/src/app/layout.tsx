@@ -1,5 +1,4 @@
 import TemporaryDrawer from "@/component/Sidebat"
-import Head from "next/head"
 import { StyledEngineProvider } from '@mui/material/styles';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 
