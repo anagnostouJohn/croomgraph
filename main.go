@@ -286,7 +286,7 @@ func SendData(c *gin.Context) {
 			}
 		}
 
-		for i, _ := range RoomSensors {
+		for i := range RoomSensors {
 			slices.Reverse(RoomSensors[i].HeatIndex)
 			slices.Reverse(RoomSensors[i].Humidity)
 			slices.Reverse(RoomSensors[i].Temperature)
@@ -368,6 +368,7 @@ func GetData(urls []string) {
 func ConnectToMongo() *mongo.Database {
 	dbURL := os.Getenv("MONGO_URI")
 	uri = fmt.Sprintf("mongodb://%s:%s@%s", config.Database.User, config.Database.Password, dbURL)
+	fmt.Println(uri, "AAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDD")
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
 	client, err := mongo.Connect(ctx, opts)
