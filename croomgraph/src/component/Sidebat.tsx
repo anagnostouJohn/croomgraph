@@ -12,12 +12,13 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import Image from 'next/image'
 
-import RoomsPng from "../../pngs/room.png"
+import RoomsPng from "../../public/images/room.png"
 
 
 
 
 export default function TemporaryDrawer() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const [open, setOpen] = React.useState(false);
     // const list: string[] = [];
     const router = useRouter();
@@ -33,7 +34,8 @@ export default function TemporaryDrawer() {
 
 
     React.useEffect(() => {
-        axios.get("http://192.168.23.61:8080/getrooms").then(res => {
+        console.log(apiUrl+"/getrooms")
+        axios.get(apiUrl+"/getrooms").then(res => {
             setState(res.data["data"])
         })
     }, [])

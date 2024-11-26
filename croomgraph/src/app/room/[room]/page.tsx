@@ -19,7 +19,7 @@ const RoomPage = () => {
     const indexPlaceStr = searchParams.get('index');
     const indexPlace = indexPlaceStr ? parseInt(indexPlaceStr, 0) : 0;
     // const list: string[] = [];
-
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
     // interface DataType {
     //     [key: string]: any;  // Define your actual data structure here
@@ -29,7 +29,7 @@ const RoomPage = () => {
 
         if (readyForNext) {
             setReadyForNext(false)
-            axios.get("http://192.168.23.61:8080/data").then(res => {
+            axios.get(apiUrl+"/data").then(res => {
                 setDummyData(res.data["data"][indexPlace]["SensorsData"]);
                 console.log(res.data["data"][indexPlace]);
                 console.log("HEllo");
@@ -54,7 +54,7 @@ const RoomPage = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedValue(e.target.value);
-        axios.post("http://192.168.23.61:8080/change", { value: e.target.value }).then(res => {
+        axios.post(apiUrl+"/change", { value: e.target.value }).then(res => {
             console.log(res.status)
 
             feachData();
