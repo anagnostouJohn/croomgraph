@@ -131,7 +131,7 @@ func SendData(c *gin.Context) {
 	prevsize := 0
 	Rooms := []string{}
 	finalRoomSensors := []vars.AllData{}
-	fmt.Println("MESA MESA NEO")
+	// fmt.Println("MESA MESA NEO")
 	db := ConnectToMongo()
 	col := db.Collection("sensors")
 	defer col.Database().Client().Disconnect(ctx)
@@ -162,9 +162,9 @@ func SendData(c *gin.Context) {
 		}
 		var ResultsOfRoom []vars.RoomData
 		if err = cur.All(ctx, &ResultsOfRoom); err != nil {
-			log.Fatal(err)
+			log.Fatal(err, "FATAL ERROR")
 		}
-		fmt.Println(len(ResultsOfRoom), nextSize, "AAAAAAAAAAASSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+		// fmt.Println(len(ResultsOfRoom), nextSize, "AAAAAAAAAAASSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
 		RoomSensors := make([]vars.SensorOrdered, len(ResultsOfRoom[0].Sensors))
 
 		TempTemp := make([][]float64, len(ResultsOfRoom[0].Sensors))
@@ -369,7 +369,7 @@ func GetData(urls []string) {
 func ConnectToMongo() *mongo.Database {
 	dbURL := os.Getenv("MONGO_URI")
 	uri = fmt.Sprintf("mongodb://%s:%s@%s/", config.Database.User, config.Database.Password, dbURL)
-	fmt.Println(uri, "AAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDD")
+	// fmt.Println(uri, "AAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDD")
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
 	client, err := mongo.Connect(ctx, opts)
