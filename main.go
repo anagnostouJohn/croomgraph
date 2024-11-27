@@ -367,8 +367,8 @@ func GetData(urls []string) {
 }
 
 func ConnectToMongo() *mongo.Database {
-	dbURL := os.Getenv("MONGO_URI")
-	uri = fmt.Sprintf("mongodb://%s:%s@%s/", config.Database.User, config.Database.Password, dbURL)
+	// dbURL := os.Getenv("MONGO_URI")
+	uri = fmt.Sprintf("mongodb://%s:%s@mongo:27017/", config.Database.User, config.Database.Password)
 	// fmt.Println(uri, "AAAAAAAAAAAAAAAAAAAAAAAAAADDDDDDDDDD")
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
