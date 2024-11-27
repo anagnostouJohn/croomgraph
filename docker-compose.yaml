@@ -20,7 +20,7 @@ services:
     ports:
       - '8080:8080'
     environment:
-      - MONGO_URI=mongo:27017/
+      - MONGO_URI="mongo:27017/"
     restart: unless-stopped
 
 
