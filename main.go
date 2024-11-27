@@ -175,7 +175,7 @@ func SendData(c *gin.Context) {
 			RoomSensors[i].Sensor = j.Lab
 		}
 		// for _, lineOfEveryResult := range ResultsOfRoom {
-		tempRoomData := []vars.RoomData{}
+		var tempRoomData = []vars.RoomData{}
 		for {
 
 			// tempRoomData := []vars.RoomData{}
@@ -264,7 +264,8 @@ func SendData(c *gin.Context) {
 
 				// setEND = false
 				tempRoomData = tempRoomData[:0]
-				fmt.Println("INSIDE")
+
+				fmt.Println("INSIDE", tempRoomData)
 				break
 
 			}
