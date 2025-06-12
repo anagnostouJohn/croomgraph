@@ -24,10 +24,13 @@ type AllData struct {
 }
 
 type SensorOrdered struct {
-	Sensor      string
-	Temperature []float64
-	Humidity    []float64
-	HeatIndex   []float64
+	Lab string
+	Tf  []float64
+	Tc  []float64
+	Hf  []float64
+	Hc  []float64
+	Lf  []float64
+	Lc  []float64
 }
 
 type RoomData struct {
@@ -54,6 +57,7 @@ type RoomData struct {
 	SignalTower  []SignalTower `json:"signal_twr"`
 	Relay        []Relay       `json:"relay"`
 	SSen         []SwitchSen   `json:"s_sen"`
+	Epoch        int64
 }
 
 type TimeConfig struct {

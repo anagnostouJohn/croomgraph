@@ -18,7 +18,8 @@ import RoomsPng from "../../public/images/room.png"
 
 
 export default function TemporaryDrawer() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    //TODO CHANGE THATH TO ENV VALUE
+    // const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     const [open, setOpen] = React.useState(false);
     // const list: string[] = [];
     const router = useRouter();
@@ -32,10 +33,11 @@ export default function TemporaryDrawer() {
 
     const [state, setState] = React.useState<string[]>([]);
 
-
+    //TODO CHANGE THATH TO ENV VALUE
     React.useEffect(() => {
-        console.log(apiUrl+"/getrooms")
-        axios.get(apiUrl+"/getrooms").then(res => {
+        //TODO CHANGE THATH TO ENV VALUE
+        console.log("http://192.168.23.61:8080" + "/getrooms")
+        axios.get("http://192.168.23.61:8080" + "/getrooms").then(res => {
             setState(res.data["data"])
         })
     }, [])
@@ -49,7 +51,7 @@ export default function TemporaryDrawer() {
         <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
             <List>
                 {state.map((text, index) => {
-                   
+
                     return (
                         <ListItem key={text} disablePadding>
                             <ListItemButton>
@@ -68,7 +70,7 @@ export default function TemporaryDrawer() {
         <div>
             {/* <Button onClick={toggleDrawer(true)}>Rooms</Button> */}
             {/* <img onClick={toggleDrawer(true)}  */}
-             <Image onClick={toggleDrawer(true)} src={RoomsPng} alt="Room" width="50" height="50"/> 
+            <Image onClick={toggleDrawer(true)} src={RoomsPng} alt="Room" width="50" height="50" />
             <Drawer open={open} onClose={toggleDrawer(false)}>
                 {DrawerList}
             </Drawer>
