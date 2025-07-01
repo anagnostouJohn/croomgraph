@@ -134,7 +134,7 @@ func SendData(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	room := c.Query("Room")
 
-	db := ConnectToMongo()
+	// db := ConnectToMongo()
 	col := db.Collection(room)
 	ctx := context.Background()
 
@@ -158,8 +158,8 @@ func SendData(c *gin.Context) {
 	allData.Room = room
 
 	///////////////////////////////////////////
-	sensorOrdered := make([]vars.SensorOrdered, len(last.Sensors)) //Data of every sensor of the room
-	for cur.Next(ctx) {                                            // Runs through Every line of the 100 last lines from the DB. it has a list of the
+	sensorOrdered := make([]vars.SensorsRoomData, len(last.Sensors)) //Data of every sensor of the room
+	for cur.Next(ctx) {                                              // Runs through Every line of the 100 last lines from the DB. it has a list of the
 		//Sensors of the room
 		raw := vars.RoomData{}
 		if err := cur.Decode(&raw); err != nil {
@@ -210,50 +210,108 @@ func SendData(c *gin.Context) {
 					sensorOrdered[i].Lc = append(sensorOrdered[i].Lc, roundedValueLc)
 				}
 			}
-		}
-		fmt.Println(sensorOrdered[0], "AAAAAAAAAAAAAAAAASASASASASASASASAS")
-		///Check if sensor has same values. If yes then has dummy values and then discurt it
-		elementsToDelete := []int{}
-		for i := len(sensorOrdered); i >= 0; i-- {
-			for i := range sensorOrdered {
-				if CheckIfhasSameValues(sensorOrdered[i].Hc) {
-					slices.Reverse(sensorOrdered[i].Hc)
-				} else {
-					elementsToDelete = append(elementsToDelete, i)
-				}
-				if CheckIfhasSameValues(sensorOrdered[i].Hf) {
-					slices.Reverse(sensorOrdered[i].Hf)
-				} else {
-					elementsToDelete = append(elementsToDelete, i)
-				}
-				if CheckIfhasSameValues(sensorOrdered[i].Lc) {
-					slices.Reverse(sensorOrdered[i].Lc)
-				} else {
-					elementsToDelete = append(elementsToDelete, i)
-				}
-				if CheckIfhasSameValues(sensorOrdered[i].Lf) {
-					slices.Reverse(sensorOrdered[i].Lf)
-				} else {
-					elementsToDelete = append(elementsToDelete, i)
-				}
-				if CheckIfhasSameValues(sensorOrdered[i].Tc) {
-					slices.Reverse(sensorOrdered[i].Tc)
-				} else {
-					elementsToDelete = append(elementsToDelete, i)
-				}
-				if CheckIfhasSameValues(sensorOrdered[i].Tf) {
-					slices.Reverse(sensorOrdered[i].Tf)
-				} else {
-					elementsToDelete = append(elementsToDelete, i)
-				}
-				for _, j := range elementsToDelete {
-					sensorOrdered = slices.Delete(sensorOrdered, j, j+1)
+			if j.H != "" {
+				if s, err := strconv.ParseFloat(j.H, 32); err == nil {
+					roundedValueH := math.Round(s*100) / 100
+					sensorOrdered[i].H = append(sensorOrdered[i].H, roundedValueH)
 				}
 			}
 		}
+
+	} ///<<<<<<<<<<<<<<<<<
+	///Check if sensor has same values. If yes then has dummy values and then discurt it
+	elementsToDelete := make([]vars.ElementsToDelete, len(sensorOrdered))
+	for i := len(sensorOrdered) - 1; i >= 0; i-- {
+		elementsToDelete[i].Entry = i
+		// for i := range sensorOrdered {
+		if CheckIfhasSameValues(sensorOrdered[i].Hc) {
+			slices.Reverse(sensorOrdered[i].Hc)
+		} else {
+			fmt.Println("A")
+			elementsToDelete[i].List = append(elementsToDelete[i].List, 0)
+			// elementsToDelete = append(elementsToDelete, i)
+		}
+		if CheckIfhasSameValues(sensorOrdered[i].Hf) {
+			slices.Reverse(sensorOrdered[i].Hf)
+		} else {
+			fmt.Println("B")
+			elementsToDelete[i].List = append(elementsToDelete[i].List, 1)
+			// elementsToDelete = append(elementsToDelete, i)
+		}
+		if CheckIfhasSameValues(sensorOrdered[i].Lc) {
+			slices.Reverse(sensorOrdered[i].Lc)
+		} else {
+			fmt.Println("C")
+			elementsToDelete[i].List = append(elementsToDelete[i].List, 2)
+			// elementsToDelete = append(elementsToDelete, i)
+		}
+		if CheckIfhasSameValues(sensorOrdered[i].Lf) {
+			slices.Reverse(sensorOrdered[i].Lf)
+		} else {
+			fmt.Println("D")
+			elementsToDelete[i].List = append(elementsToDelete[i].List, 3)
+			// elementsToDelete = append(elementsToDelete, i)
+		}
+		if CheckIfhasSameValues(sensorOrdered[i].Tc) {
+			slices.Reverse(sensorOrdered[i].Tc)
+		} else {
+			fmt.Println("E")
+			elementsToDelete[i].List = append(elementsToDelete[i].List, 4)
+			// elementsToDelete = append(elementsToDelete, i)
+		}
+		if CheckIfhasSameValues(sensorOrdered[i].Tf) {
+			slices.Reverse(sensorOrdered[i].Tf)
+		} else {
+			fmt.Println("F")
+			elementsToDelete[i].List = append(elementsToDelete[i].List, 5)
+			// elementsToDelete = append(elementsToDelete, i)
+		}
+
+		if CheckIfhasSameValues(sensorOrdered[i].H) {
+			slices.Reverse(sensorOrdered[i].H)
+		} else {
+			fmt.Println("G")
+			elementsToDelete[i].List = append(elementsToDelete[i].List, 6)
+			// elementsToDelete = append(elementsToDelete, i)
+		}
+		fmt.Println(elementsToDelete)
+
+		// for _, j := range elementsToDelete {
+		// 	if len(j.List) > 0 {
+		// 		slices.Reverse(j.List)
+		// 		for _, k := range j.List {
+		// 			if k == 0 {
+		// 				sensorOrdered[j.Entry].Hc = sensorOrdered[j.Entry].Hc[:0]
+		// 			} else if k == 1 {
+		// 				sensorOrdered[j.Entry].Hf = sensorOrdered[j.Entry].Hf[:0]
+		// 			} else if k == 2 {
+		// 				sensorOrdered[j.Entry].Lc = sensorOrdered[j.Entry].Lc[:0]
+		// 			} else if k == 3 {
+		// 				sensorOrdered[j.Entry].Lf = sensorOrdered[j.Entry].Lf[:0]
+		// 			} else if k == 4 {
+		// 				sensorOrdered[j.Entry].Tc = sensorOrdered[j.Entry].Tc[:0]
+		// 			} else if k == 5 {
+		// 				sensorOrdered[j.Entry].Tf = sensorOrdered[j.Entry].Tf[:0]
+		// 			} else if k == 6 {
+		// 				sensorOrdered[j.Entry].H = sensorOrdered[j.Entry].H[:0]
+		// 			}
+
+		// 		}
+		// 	}
+		// }
+
 	}
+	// fmt.Println(elementsToDelete, "AAAAAAAAAAAAAAAAAAAAAa")
+	// allData.SensorsData = sensorOrdered
 	allData.SensorsData = sensorOrdered
-	fmt.Println(allData, "<<<<<A<A<A<A<A<A<")
+	for _, j := range allData.SensorsData {
+		fmt.Println(j.H, "AAAAAAAAAAAAAAAAaa")
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": allData,
+	})
+
 }
 
 func CheckIfZero(list []float64) bool {

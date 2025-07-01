@@ -20,17 +20,23 @@ type SensorsIP struct {
 
 type AllData struct {
 	Room        string
-	SensorsData []SensorOrdered
+	SensorsData []SensorsRoomData
 }
 
-type SensorOrdered struct {
+type SensorsRoomData struct {
 	Lab string
-	Tf  []float64
-	Tc  []float64
-	Hf  []float64
 	Hc  []float64
-	Lf  []float64
+	Hf  []float64
 	Lc  []float64
+	Lf  []float64
+	Tc  []float64
+	Tf  []float64
+	H   []float64
+}
+
+type ElementsToDelete struct {
+	Entry int
+	List  []int
 }
 
 type RoomData struct {
